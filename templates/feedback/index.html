@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block heading %}Feedback History{% endblock %}
+{% block content %}
+<div class="page-intro"><p>Share a suggestion or concern with the academic support team.</p></div>
+<div class="two-col">
+<section class="panel"><div class="panel-head"><div><h2>Submit feedback</h2><p class="muted">Please do not include passwords or sensitive personal information.</p></div></div>
+<form method="post" class="stack-form">
+<label for="category">Category</label><select id="category" name="category" required><option value="">Choose a category</option>{% for c in ['Teaching','Course materials','Timetable','Facilities','Other'] %}<option>{{ c }}</option>{% endfor %}</select>
+<label for="subject">Subject or topic</label><input id="subject" name="subject" maxlength="120" required placeholder="What is your feedback about?">
+<label for="message">Message</label><textarea id="message" name="message" rows="6" maxlength="3000" required placeholder="Share details that would help us understand..."></textarea>
+<div class="form-hint">Up to 3,000 characters</div><button class="button primary" type="submit">Submit feedback <span>→</span></button>
+</form></section>
+<section class="panel"><div class="panel-head"><div><h2>Previous submissions</h2><p class="muted">Your feedback remains associated with your account.</p></div><span class="tag">{{ history|length }}</span></div>
+{% for item in history %}<article class="feedback-item"><div class="feedback-top"><span class="tag">{{ item.category }}</span><span class="muted small-text">{{ item.created_at }}</span></div><h3>{{ item.subject }}</h3><p>{{ item.message }}</p><span class="tag success">{{ item.status }}</span></article>{% else %}<div class="empty-state">Your submitted feedback will appear here.</div>{% endfor %}
+</section></div>
+{% endblock %}
