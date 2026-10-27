@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% block title %}Assembly Attendance{% endblock %}
+{% block heading %}Assembly Attendance{% endblock %}
+{% block content %}
+<div class="page-intro split-intro"><p>Review assembly attendance separately from individual class periods.</p>
+<form method="get" class="filter-form"><label for="term">Academic term</label><select id="term" name="term" onchange="this.form.submit()">{% for term in terms %}<option value="{{ term.id }}" {{ 'selected' if term.id==selected_term else '' }}>{{ term.name }}</option>{% endfor %}</select></form></div>
+<div class="stats-grid attendance-stats">
+  <div class="stat-card"><div class="stat-top"><span>Assembly attendance</span><span class="stat-icon blue">◷</span></div><div class="stat-value">{{ summary.percentage }}<small>%</small></div><div class="stat-foot">Present ÷ (Present + Absent)</div></div>
+  <div class="stat-card"><div class="stat-top"><span>Recorded days</span><span class="stat-icon cyan">▤</span></div><div class="stat-value">{{ summary.total }}</div><div class="stat-foot">Stored records for selected term</div></div>
+  <div class="stat-card"><div class="stat-top"><span>Present</span><span class="stat-icon green">✓</span></div><div class="stat-value">{{ summary.present }}</div><div class="stat-foot">Finalized as present</div></div>
+  <div class="stat-card"><div class="stat-top"><span>Absent</span><span class="stat-icon amber">!</span></div><div class="stat-value">{{ summary.absent }}</div><div class="stat-foot">Finalized as absent</div></div>
+  <div class="stat-card"><div class="stat-top"><span>Unmarked</span><span class="stat-icon purple">…</span></div><div class="stat-value">{{ summary.unmarked }}</div><div class="stat-foot">Awaiting finalization</div></div>
+  <div class="stat-card"><div class="stat-top"><span>Medical</span><span class="stat-icon cyan">＋</span></div><div class="stat-value">{{ summary.medical }}</div><div class="stat-foot">Recorded as medical</div></div>
+</div>
+<section class="panel table-panel"><div class="panel-head"><div><h2>Assembly register</h2><p class="muted">Recent records appear first. U means unmarked.</p></div></div>
+<div class="table-wrap"><table><thead><tr><th>Date</th><th>Status</th><th>Description</th></tr></thead><tbody>
+{% for r in records %}<tr><td>{{ r.class_date }}</td><td><span class="attendance-pill status-{{ r.assembly_status|lower|replace('-','none') }}">{{ r.assembly_status }}</span></td><td>{{ statuses.get(r.assembly_status,'Unknown') }}</td></tr>{% else %}<tr><td colspan="3" class="empty-state">No assembly records for this term.</td></tr>{% endfor %}
+</tbody></table></div></section>
+{% endblock %}
