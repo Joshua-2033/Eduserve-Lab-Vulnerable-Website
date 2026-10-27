@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block title %}Timetable Calendar{% endblock %}
+{% block heading %}Timetable Calendar{% endblock %}
+{% block content %}
+<div class="page-intro split-intro"><p>Review recorded class days and their attendance states for an academic term.</p><form method="get" class="filter-form"><label for="term">Academic term</label><select id="term" name="term" onchange="this.form.submit()">{% for term in terms %}<option value="{{ term.id }}" {{ 'selected' if term.id==selected_term else '' }}>{{ term.name }}</option>{% endfor %}</select></form></div>
+<section class="panel table-panel"><div class="panel-head"><div><h2>Recorded class days</h2><p class="muted">This view is derived from your stored attendance records.</p></div><span class="tag">{{ records|length }} days</span></div>
+<div class="table-wrap"><table><thead><tr><th>Date</th><th>Course</th><th>Assembly</th><th>Hour 1</th><th>Hour 2</th><th>Hour 3</th><th>Hour 4</th></tr></thead><tbody>
+{% for r in records %}<tr><td><strong>{{ r.class_date }}</strong></td><td>{{ r.course_code or '—' }}<small class="cell-sub">{{ r.course_name or '' }}</small></td>{% for key in ['assembly_status','hour1','hour2','hour3','hour4'] %}{% set status=r[key] %}<td><span class="attendance-pill status-{{ status|lower|replace('-','none') }}" title="{{ statuses.get(status,'No class') }}">{{ status }}</span></td>{% endfor %}</tr>{% else %}<tr><td colspan="7" class="empty-state">No recorded class days for this term.</td></tr>{% endfor %}
+</tbody></table></div></section>
+{% endblock %}
