@@ -8,11 +8,13 @@ from __future__ import annotations
 import os
 import secrets
 import sqlite3
+import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
 
-from werkzeug.security import generate_password_hash
+from werkzeug.security import check_password_hash, generate_password_hash
 from app import app
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -125,6 +127,79 @@ class EduserveIntegrationTests(unittest.TestCase):
         response = self.client.post("/login", data={"email": email, "password": self.test_password}, follow_redirects=True)
         self.assertEqual(response.status_code, 200)
         return response
+
+    def test_database_initializer_seeds_synthetic_accounts_and_hashes_passwords(self):
+        with tempfile.TemporaryDirectory(prefix="eduserve-init-test-") as tmp:
+            db_path = str(Path(tmp) / "seeded.sqlite3")
+            passwords = {
+                "LAB_JOSHUA_PASSWORD": secrets.token_urlsafe(20),
+                "LAB_SABARI_PASSWORD": secrets.token_urlsafe(20),
+                "LAB_NITHIN_PASSWORD": secrets.token_urlsafe(20),
+                "LAB_ADMIN_PASSWORD": secrets.token_urlsafe(20),
+            }
+            env = os.environ.copy()
+            env.update(passwords)
+            env["FLASK_SECRET_KEY"] = secrets.token_urlsafe(48)
+            env["EDUSERVE_DATABASE"] = db_path
+            result = subprocess.run(
+                [sys.executable, "-m", "database.init_db"],
+                cwd=ROOT, env=env, capture_output=True, text=True, timeout=30,
+            )
+            self.assertEqual(result.returncode, 0, msg=result.stdout + result.stderr)
+            with sqlite3.connect(db_path) as db:
+                users = db.execute("SELECT email, role, password_hash FROM users").fetchall()
+                self.assertEqual(len(users), 4)
+                self.assertEqual(sum(role == "student" for _, role, _ in users), 3)
+                self.assertEqual(sum(role == "admin" for _, role, _ in users), 1)
+                password_by_email = {
+                    "joshua@karunya.edu.in": passwords["LAB_JOSHUA_PASSWORD"],
+                    "sabari@karunya.edu.in": passwords["LAB_SABARI_PASSWORD"],
+                    "nithin@karunya.edu.in": passwords["LAB_NITHIN_PASSWORD"],
+                    "admin@karunya.edu": passwords["LAB_ADMIN_PASSWORD"],
+                }
+                for email, _role, password_hash in users:
+                    self.assertNotEqual(password_hash, password_by_email[email])
+                    self.assertTrue(check_password_hash(password_hash, password_by_email[email]))
+                self.assertEqual(db.execute("SELECT COUNT(*) FROM student_profiles").fetchone()[0], 3)
+                self.assertEqual(db.execute("SELECT COUNT(*) FROM attendance_records").fetchone()[0], 54)
+                self.assertEqual(db.execute("SELECT COUNT(*) FROM enrollments").fetchone()[0], 15)
+                self.assertEqual(db.execute("SELECT COUNT(*) FROM assessment_results").fetchone()[0], 30)
+
+    def test_database_initializer_rejects_duplicate_passwords_before_creating_database(self):
+        with tempfile.TemporaryDirectory(prefix="eduserve-duplicate-password-test-") as tmp:
+            db_path = str(Path(tmp) / "must-not-exist.sqlite3")
+            repeated = secrets.token_urlsafe(20)
+            env = os.environ.copy()
+            env.update({
+                "FLASK_SECRET_KEY": secrets.token_urlsafe(48),
+                "LAB_JOSHUA_PASSWORD": repeated,
+                "LAB_SABARI_PASSWORD": repeated,
+                "LAB_NITHIN_PASSWORD": secrets.token_urlsafe(20),
+                "LAB_ADMIN_PASSWORD": secrets.token_urlsafe(20),
+                "EDUSERVE_DATABASE": db_path,
+            })
+            result = subprocess.run(
+                [sys.executable, "-m", "database.init_db"],
+                cwd=ROOT, env=env, capture_output=True, text=True, timeout=30,
+            )
+            self.assertEqual(result.returncode, 2, msg=result.stdout + result.stderr)
+            self.assertIn("must be unique", result.stderr)
+            self.assertFalse(Path(db_path).exists())
+
+    def test_topbar_has_notifications_and_role_appropriate_actions(self):
+        self.login()
+        student_home = self.client.get("/dashboard")
+        self.assertIn(b"Upcoming assessments", student_home.data)
+        self.assertIn(b"profile-menu", student_home.data)
+        self.assertIn(b"Course Registration", student_home.data)
+
+        admin = app.test_client()
+        admin.post("/login", data={
+            "email": "admin@karunya.edu", "password": self.test_password,
+        }, follow_redirects=True)
+        admin_home = admin.get("/dashboard")
+        self.assertIn(b"Administration", admin_home.data)
+        self.assertNotIn(b"Course Registration", admin_home.data)
 
     def test_login_dashboard_and_class_views(self):
         response = self.login()
