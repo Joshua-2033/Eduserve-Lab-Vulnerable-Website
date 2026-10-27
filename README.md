@@ -171,7 +171,7 @@ A test result reflects only the checks actually run; it is not a certification t
 
 ## Lab mode and remediation
 
-`EDUSERVE_LAB_MODE=vulnerable` intentionally enables selected flaws. For a defensive comparison, change `.env` to `EDUSERVE_LAB_MODE=patched`, restart the server, and repeat the same test. The code path uses parameterized search, ownership checks, a role check, safe template escaping, and current-term validation in patched mode. This is a teaching patch set, **not a claim that the whole application is production secure**. Keep owner-side remediation notes separate from the student brief and rerun all checks after code changes.
+`EDUSERVE_LAB_MODE=vulnerable` intentionally enables selected flaws. For a defensive comparison, change `.env` to `EDUSERVE_LAB_MODE=patched`, restart the server, and repeat the same test. After recording a confirmed behavior, repeat the same request in patched mode and compare the actual response and database state. Do not assume a control is effective without retesting it. This is a teaching patch set, **not a claim that the whole application is production secure**. Keep owner-side remediation notes separate from the student brief and rerun all checks after code changes.
 
 ## Repository privacy and student distribution
 
