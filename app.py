@@ -302,7 +302,7 @@ def results():
     if kind not in ('IA1','IA2'): kind='IA1'
     rows = get_db().execute('''SELECT e.assessment_type,e.exam_date,e.max_marks,c.code,c.name,r.marks_obtained,r.status
        FROM assessment_results r JOIN examinations e ON e.id=r.examination_id JOIN courses c ON c.id=e.course_id
-       WHERE r.student_id=? AND e.assessment_type=? ORDER BY e.exam_date,c.code''', (user['id'],kind)).fetchall()
+       WHERE r.student_id=? AND e.assessment_type=? AND r.status='Published' ORDER BY e.exam_date,c.code''', (user['id'],kind)).fetchall()
     return render_template('examinations/results.html', rows=rows, kind=kind)
 
 @app.route('/fees')
