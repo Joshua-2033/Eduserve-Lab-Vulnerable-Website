@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block heading %}Good to see you, {{ user.display_name.split(' ')[0] }}{% endblock %}
+{% block content %}
+<div class="welcome-row"><div><p class="muted">Here’s what’s happening with your academics today.</p></div><span class="date-chip">◷ &nbsp; Semester 1 · 2026–27</span></div>
+{% if user.role=='student' %}
+<section class="profile-hero"><div class="profile-main"><div class="profile-avatar">{{ user.display_name.split(' ')[0][0] }}{{ user.display_name.split(' ')[-1][0] }}</div><div><span class="overline">STUDENT PROFILE</span><h2>{{ user.display_name }}</h2><p>{{ profile.programme }} · {{ profile.department }}</p><div class="profile-meta"><span>▣ {{ profile.registration_no }}</span><span>✉ {{ user.email }}</span></div></div></div><a class="button light" href="{{ url_for('profile') }}">View Profile <span>↗</span></a><div class="hero-decoration"></div></section>
+<div class="stats-grid">
+<div class="stat-card"><div class="stat-top"><span>Class attendance</span><span class="stat-icon blue">◷</span></div><div class="stat-value">{{ summary.percentage }}<small>%</small></div><div class="progress"><span style="width:{{ [summary.percentage,100]|min }}%"></span></div><div class="stat-foot">Based on finalized class hours</div></div>
+<div class="stat-card"><div class="stat-top"><span>Assembly attendance</span><span class="stat-icon cyan">⌂</span></div><div class="stat-value">{{ assembly_summary.percentage }}<small>%</small></div><div class="stat-foot">Based on finalized assembly records</div></div>
+<div class="stat-card"><div class="stat-top"><span>Courses enrolled</span><span class="stat-icon purple">▤</span></div><div class="stat-value">{{ course_count }}</div><div class="stat-foot">Current and previous terms</div></div>
+<div class="stat-card"><div class="stat-top"><span>Published results</span><span class="stat-icon amber">▥</span></div><div class="stat-value">{{ results_count }}</div><div class="stat-foot">Internal assessment records</div></div>
+<div class="stat-card"><div class="stat-top"><span>Outstanding items</span><span class="stat-icon amber">!</span></div><div class="stat-value">{{ outstanding_count }}</div><div class="stat-foot">Pending result records</div></div>
+</div>
+{% else %}
+<section class="profile-hero"><div class="profile-main"><div class="profile-avatar">EA</div><div><span class="overline">ADMINISTRATOR</span><h2>{{ user.display_name }}</h2><p>Academic operations and student support</p><div class="profile-meta"><span>✉ {{ user.email }}</span></div></div></div><a class="button light" href="{{ url_for('admin_home') }}">Open Admin Overview <span>↗</span></a></section>
+{% endif %}
+<div class="section-heading"><div><h2>Quick access</h2><p>Frequently used academic services</p></div><a href="{{ url_for('classes') }}" class="text-link">All services ↗</a></div>
+<div class="quick-grid">
+<a class="quick-card" href="{{ url_for('classes') }}"><span class="quick-icon tint-blue">▤</span><strong>Classes</strong><small>Timetable and class details</small><span class="card-arrow">↗</span></a>
+<a class="quick-card" href="{{ url_for('examinations') }}"><span class="quick-icon tint-purple">▣</span><strong>Examinations</strong><small>Upcoming assessments</small><span class="card-arrow">↗</span></a>
+<a class="quick-card" href="{{ url_for('fees') }}"><span class="quick-icon tint-amber">₹</span><strong>Fees</strong><small>Statements and information</small><span class="card-arrow">↗</span></a>
+{% if user.role=='student' %}<a class="quick-card" href="{{ url_for('profile') }}"><span class="quick-icon tint-cyan">◉</span><strong>Personal Information</strong><small>Review your profile</small><span class="card-arrow">↗</span></a>{% endif %}
+<a class="quick-card" href="{{ url_for('leave') }}"><span class="quick-icon tint-green">↗</span><strong>Leave</strong><small>Leave information</small><span class="card-arrow">↗</span></a>
+<a class="quick-card" href="{{ url_for('hostel') }}"><span class="quick-icon tint-blue">⌂</span><strong>Hostel</strong><small>Accommodation details</small><span class="card-arrow">↗</span></a>
+<a class="quick-card" href="{{ url_for('course_registration') }}"><span class="quick-icon tint-purple">＋</span><strong>Course Registration</strong><small>Review course selections</small><span class="card-arrow">↗</span></a>
+<a class="quick-card" href="{{ url_for('feedback') }}"><span class="quick-icon tint-amber">✉</span><strong>Feedback History</strong><small>Share feedback with support</small><span class="card-arrow">↗</span></a>
+</div>
+<div class="notice-banner"><span>✦</span><div><strong>Keep your academic profile up to date</strong><p>Check your personal information and review attendance records throughout the term.</p></div><a href="{{ url_for('attendance') }}">View attendance →</a></div>
+{% endblock %}
