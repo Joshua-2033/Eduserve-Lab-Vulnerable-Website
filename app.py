@@ -66,7 +66,28 @@ def attendance_summary(records):
 @app.context_processor
 def inject_globals():
     user = current_user()
-    return {'logged_user': user, 'lab_mode': app.config.get('LAB_MODE', 'vulnerable'), 'statuses': STATUSES}
+    notification_count = 0
+    if user:
+        db = get_db()
+        if user['role'] == 'student':
+            notification_count = db.execute("""
+                SELECT COUNT(*) AS n
+                FROM examinations e
+                JOIN enrollments en
+                  ON en.course_id = e.course_id AND en.term_id = e.term_id
+                WHERE en.student_id = ? AND en.status = 'enrolled'
+                  AND e.exam_date >= date('now')
+            """, (user['id'],)).fetchone()['n']
+        else:
+            notification_count = db.execute(
+                'SELECT COUNT(*) AS n FROM examinations WHERE exam_date >= date("now")'
+            ).fetchone()['n']
+    return {
+        'logged_user': user,
+        'lab_mode': app.config.get('LAB_MODE', 'vulnerable'),
+        'statuses': STATUSES,
+        'notification_count': notification_count,
+    }
 
 @app.after_request
 def add_baseline_headers(response):
