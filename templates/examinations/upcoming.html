@@ -1,0 +1,8 @@
+{% extends 'base.html' %}
+{% block heading %}Upcoming Assessments{% endblock %}
+{% block content %}
+<div class="page-intro"><p>Assessment dates from the academic schedule.</p></div>
+<section class="panel"><div class="table-wrap"><table><thead><tr><th>Date</th><th>Course</th><th>Assessment</th><th>Maximum marks</th><th>Term</th></tr></thead><tbody>
+{% for e in exams %}<tr><td>{{ e.exam_date }}</td><td><strong>{{ e.code }}</strong><small class="cell-sub">{{ e.name }}</small></td><td>{{ e.assessment_type }}</td><td>{{ e.max_marks }}</td><td>{{ e.term_name }}</td></tr>{% else %}<tr><td colspan="5" class="empty-state">No upcoming assessments are scheduled.</td></tr>{% endfor %}
+</tbody></table></div></section>
+{% endblock %}
