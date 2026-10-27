@@ -364,7 +364,7 @@ def student_results(student_id):
     if not lab_vulnerable() and user['role']!='admin' and student_id!=user['id']: abort(403)
     rows=get_db().execute('''SELECT e.assessment_type,e.exam_date,e.max_marks,c.code,c.name,r.marks_obtained,r.status
       FROM assessment_results r JOIN examinations e ON e.id=r.examination_id JOIN courses c ON c.id=e.course_id
-      WHERE r.student_id=? ORDER BY e.exam_date,c.code''',(student_id,)).fetchall()
+      WHERE r.student_id=? AND r.status='Published' ORDER BY e.exam_date,c.code''',(student_id,)).fetchall()
     if not rows and not get_db().execute('SELECT id FROM users WHERE id=? AND role="student"',(student_id,)).fetchone(): abort(404)
     return render_template('examinations/student_results.html', rows=rows, student_id=student_id)
 
