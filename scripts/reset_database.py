@@ -22,6 +22,9 @@ secret = os.getenv('FLASK_SECRET_KEY', '')
 if any(len(value) < 12 or value.startswith('change-this-') for value in passwords):
     print('Reset cancelled: configure four unique LAB_*_PASSWORD values of at least 12 characters in .env.', file=sys.stderr)
     raise SystemExit(2)
+if len(set(passwords)) != len(passwords):
+    print('Reset cancelled: each LAB_*_PASSWORD must be unique. The existing database has not been changed.', file=sys.stderr)
+    raise SystemExit(2)
 if len(secret) < 32 or secret.startswith('replace-with-'):
     print('Reset cancelled: configure a random FLASK_SECRET_KEY of at least 32 characters in .env.', file=sys.stderr)
     raise SystemExit(2)
