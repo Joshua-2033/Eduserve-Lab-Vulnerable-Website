@@ -22,7 +22,7 @@
 {% if user.role=='student' %}<a class="quick-card" href="{{ url_for('profile') }}"><span class="quick-icon tint-cyan">◉</span><strong>Personal Information</strong><small>Review your profile</small><span class="card-arrow">↗</span></a>{% endif %}
 <a class="quick-card" href="{{ url_for('leave') }}"><span class="quick-icon tint-green">↗</span><strong>Leave</strong><small>Leave information</small><span class="card-arrow">↗</span></a>
 <a class="quick-card" href="{{ url_for('hostel') }}"><span class="quick-icon tint-blue">⌂</span><strong>Hostel</strong><small>Accommodation details</small><span class="card-arrow">↗</span></a>
-<a class="quick-card" href="{{ url_for('course_registration') }}"><span class="quick-icon tint-purple">＋</span><strong>Course Registration</strong><small>Review course selections</small><span class="card-arrow">↗</span></a>
+{% if user.role=='student' %}<a class="quick-card" href="{{ url_for('course_registration') }}"><span class="quick-icon tint-purple">＋</span><strong>Course Registration</strong><small>Review course selections</small><span class="card-arrow">↗</span></a>{% endif %}
 <a class="quick-card" href="{{ url_for('feedback') }}"><span class="quick-icon tint-amber">✉</span><strong>Feedback History</strong><small>Share feedback with support</small><span class="card-arrow">↗</span></a>
 </div>
 <div class="notice-banner"><span>✦</span><div><strong>Keep your academic profile up to date</strong><p>Check your personal information and review attendance records throughout the term.</p></div><a href="{{ url_for('attendance') }}">View attendance →</a></div>
