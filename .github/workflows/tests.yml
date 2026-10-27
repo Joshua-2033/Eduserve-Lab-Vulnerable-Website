@@ -24,3 +24,40 @@ jobs:
         run: python -m pip install -r requirements.txt
       - name: Run syntax, schema, and integration checks
         run: python scripts/run_checks.py
+      - name: Smoke test the real localhost server and login flow
+        shell: bash
+        run: |
+          set -euo pipefail
+          tmpdir="$(mktemp -d)"
+          export FLASK_SECRET_KEY="$(python -c 'import secrets; print(secrets.token_urlsafe(48))')"
+          export LAB_JOSHUA_PASSWORD="$(python -c 'import secrets; print(secrets.token_urlsafe(20))')"
+          export LAB_SABARI_PASSWORD="$(python -c 'import secrets; print(secrets.token_urlsafe(20))')"
+          export LAB_NITHIN_PASSWORD="$(python -c 'import secrets; print(secrets.token_urlsafe(20))')"
+          export LAB_ADMIN_PASSWORD="$(python -c 'import secrets; print(secrets.token_urlsafe(20))')"
+          export EDUSERVE_DATABASE="$tmpdir/eduserve.sqlite3"
+          export PORT=5055
+
+          python -m database.init_db
+          python app.py > "$tmpdir/app.log" 2>&1 &
+          app_pid=$!
+          trap 'kill "$app_pid" >/dev/null 2>&1 || true; wait "$app_pid" 2>/dev/null || true; rm -rf "$tmpdir"' EXIT
+
+          base="http://127.0.0.1:$PORT"
+          ready=false
+          for attempt in $(seq 1 30); do
+            if curl -fsS "$base/health" > "$tmpdir/health.json"; then
+              ready=true
+              break
+            fi
+            sleep 1
+          done
+          if [ "$ready" != true ]; then
+            cat "$tmpdir/app.log"
+            exit 1
+          fi
+          grep -q '"status":"ok"' "$tmpdir/health.json"
+          login_status="$(curl -sS -o /dev/null -w '%{http_code}' -c "$tmpdir/cookies.txt" --data-urlencode "email=joshua@karunya.edu.in" --data-urlencode "password=$LAB_JOSHUA_PASSWORD" "$base/login")"
+          test "$login_status" = "302"
+          curl -fsS -b "$tmpdir/cookies.txt" "$base/dashboard" > "$tmpdir/dashboard.html"
+          grep -q 'Joshua Mathew' "$tmpdir/dashboard.html"
+          echo "Local server health and authenticated dashboard passed."
