@@ -67,8 +67,14 @@ def attendance_summary(records):
 def inject_globals():
     user = current_user()
     notification_count = 0
+    current_term_name = 'No active term'
     if user:
         db = get_db()
+        term_row = db.execute(
+            'SELECT name FROM academic_terms WHERE is_current=1 LIMIT 1'
+        ).fetchone()
+        if term_row:
+            current_term_name = term_row['name']
         if user['role'] == 'student':
             notification_count = db.execute("""
                 SELECT COUNT(*) AS n
@@ -87,6 +93,7 @@ def inject_globals():
         'lab_mode': app.config.get('LAB_MODE', 'vulnerable'),
         'statuses': STATUSES,
         'notification_count': notification_count,
+        'current_term_name': current_term_name,
     }
 
 @app.after_request
