@@ -12,8 +12,4 @@ document.addEventListener('DOMContentLoaded', () => {
       button.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
     });
   });
-  document.querySelectorAll('form').forEach(form => form.addEventListener('submit', () => {
-    const button = form.querySelector('button[type="submit"],button:not([type])');
-    if (button && !button.dataset.noLoading) { button.dataset.originalText = button.textContent; }
-  }));
 });
