@@ -86,17 +86,19 @@ Run this check from the project directory, with the virtual environment active. 
 
 ```bash
 python - <<'PY'
-from dotenv import dotenv_values
+import os
+from dotenv import load_dotenv
 
-cfg = dotenv_values(".env")
+# Match how the application loads configuration: existing shell variables take precedence.
+load_dotenv(".env")
 password_keys = [
     "LAB_JOSHUA_PASSWORD",
     "LAB_SABARI_PASSWORD",
     "LAB_NITHIN_PASSWORD",
     "LAB_ADMIN_PASSWORD",
 ]
-passwords = [cfg.get(key) or "" for key in password_keys]
-secret = cfg.get("FLASK_SECRET_KEY") or ""
+passwords = [os.getenv(key, "") for key in password_keys]
+secret = os.getenv("FLASK_SECRET_KEY", "")
 
 problems = []
 for key, value in zip(password_keys, passwords):
