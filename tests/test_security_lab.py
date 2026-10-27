@@ -201,6 +201,41 @@ class EduserveIntegrationTests(unittest.TestCase):
         self.assertIn(b"Administration", admin_home.data)
         self.assertNotIn(b"Course Registration", admin_home.data)
 
+    def test_online_class_feedback_has_its_own_heading_and_persists_submissions(self):
+        self.login()
+        page = self.client.get("/classes/online-feedback")
+        self.assertEqual(page.status_code, 200)
+        self.assertIn(b"Online Class Feedback", page.data)
+        self.assertIn(b"online class session", page.data)
+        posted = self.client.post(
+            "/classes/online-feedback",
+            data={"category": "Teaching", "subject": "Online session audio",
+                  "message": "Audio was unclear in the synthetic test session."},
+            follow_redirects=True,
+        )
+        self.assertEqual(posted.status_code, 200)
+        self.assertIn(b"Online Class Feedback", posted.data)
+        self.assertIn(b"Online session audio", posted.data)
+        with sqlite3.connect(self.db_path) as db:
+            saved = db.execute(
+                "SELECT COUNT(*) FROM feedback_submissions WHERE student_id=1 AND subject=?",
+                ("Online session audio",),
+            ).fetchone()[0]
+        self.assertEqual(saved, 1)
+
+    def test_student_result_views_hide_unpublished_marks(self):
+        self.login()
+        with sqlite3.connect(self.db_path) as db:
+            db.execute("UPDATE assessment_results SET status='Pending' WHERE student_id=?", (self.user_ids["joshua@karunya.edu.in"],))
+        own_results = self.client.get("/results?type=IA1")
+        self.assertEqual(own_results.status_code, 200)
+        self.assertIn(b"No results have been published", own_results.data)
+        detail_results = self.client.get("/student/1/results")
+        self.assertEqual(detail_results.status_code, 200)
+        self.assertIn(b"No results found.", detail_results.data)
+        self.assertNotIn(b"31.0", own_results.data)
+        self.assertNotIn(b"39.0", detail_results.data)
+
     def test_all_student_pages_render_without_server_errors(self):
         self.login()
         paths = (
