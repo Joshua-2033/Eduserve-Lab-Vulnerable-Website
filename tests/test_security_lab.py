@@ -201,6 +201,43 @@ class EduserveIntegrationTests(unittest.TestCase):
         self.assertIn(b"Administration", admin_home.data)
         self.assertNotIn(b"Course Registration", admin_home.data)
 
+    def test_all_student_pages_render_without_server_errors(self):
+        self.login()
+        paths = (
+            "/dashboard", "/profile", "/classes", "/classes/timetable",
+            "/classes/calendar", "/classes/assembly-attendance", "/classes/attendance",
+            "/classes/course-attendance", "/classes/online-feedback", "/classes/feedback",
+            "/examinations", "/examinations/upcoming", "/results?type=IA1",
+            "/results?type=IA2", "/fees", "/leave", "/hostel",
+            "/course-registration", "/search?q=database", "/student/1/results",
+            "/admin/feedback", "/contact-administration",
+        )
+        for path in paths:
+            with self.subTest(path=path):
+                response = self.client.get(path)
+                self.assertEqual(response.status_code, 200, msg=f"{path} returned {response.status_code}")
+
+    def test_admin_pages_render_and_student_only_registration_is_forbidden(self):
+        admin = app.test_client()
+        login = admin.post("/login", data={
+            "email": "admin@karunya.edu", "password": self.test_password,
+        }, follow_redirects=True)
+        self.assertEqual(login.status_code, 200)
+        self.assertEqual(admin.get("/admin").status_code, 200)
+        self.assertEqual(admin.get("/admin/feedback").status_code, 200)
+        self.assertEqual(admin.get("/course-registration").status_code, 403)
+
+    def test_session_cookie_attributes_are_set_for_local_testing(self):
+        response = self.client.post("/login", data={
+            "email": "joshua@karunya.edu.in", "password": self.test_password,
+        }, follow_redirects=False)
+        self.assertEqual(response.status_code, 302)
+        cookie = response.headers.get("Set-Cookie", "")
+        self.assertIn("HttpOnly", cookie)
+        self.assertIn("SameSite=Lax", cookie)
+        # Secure is intentionally omitted for the documented localhost HTTP lab.
+        self.assertNotIn("Secure", cookie)
+
     def test_login_dashboard_and_class_views(self):
         response = self.login()
         self.assertIn(b"Joshua Mathew", response.data)
