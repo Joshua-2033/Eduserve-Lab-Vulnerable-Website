@@ -270,6 +270,10 @@ def online_class_feedback():
 @app.route('/classes/feedback', methods=['GET','POST'])
 @login_required
 def feedback():
+    page_title = 'Online Class Feedback' if request.endpoint == 'online_class_feedback' else 'Feedback History'
+    page_intro = ('Share feedback about an online class session with the academic support team.'
+                  if request.endpoint == 'online_class_feedback'
+                  else 'Share a suggestion or concern with the academic support team.')
     db = get_db(); user = current_user()
     if request.method == 'POST':
         category = request.form.get('category','').strip()
@@ -280,9 +284,9 @@ def feedback():
         else:
             db.execute('INSERT INTO feedback_submissions(student_id,category,subject,message) VALUES(?,?,?,?)', (user['id'],category,subject,message)); db.commit()
             flash('Your feedback has been submitted.', 'success')
-            return redirect(url_for('feedback'))
+            return redirect(url_for(request.endpoint))
     history = db.execute('SELECT * FROM feedback_submissions WHERE student_id=? ORDER BY created_at DESC,id DESC', (user['id'],)).fetchall()
-    return render_template('feedback/index.html', history=history)
+    return render_template('feedback/index.html', history=history, page_title=page_title, page_intro=page_intro)
 
 @app.route('/examinations')
 @login_required
