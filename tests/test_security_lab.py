@@ -165,6 +165,54 @@ class EduserveIntegrationTests(unittest.TestCase):
                 self.assertEqual(db.execute("SELECT COUNT(*) FROM enrollments").fetchone()[0], 15)
                 self.assertEqual(db.execute("SELECT COUNT(*) FROM assessment_results").fetchone()[0], 30)
 
+    def test_database_reset_validates_configuration_and_preserves_backup(self):
+        with tempfile.TemporaryDirectory(prefix="eduserve-reset-test-", dir=ROOT / "instance") as tmp:
+            db_path = Path(tmp) / "eduserve.sqlite3"
+            original = b"existing local lab database placeholder for reset test"
+            db_path.write_bytes(original)
+            env = os.environ.copy()
+            env["EDUSERVE_DATABASE"] = str(db_path)
+            env["FLASK_SECRET_KEY"] = secrets.token_urlsafe(48)
+            repeated = secrets.token_urlsafe(20)
+            env.update({
+                "LAB_JOSHUA_PASSWORD": repeated,
+                "LAB_SABARI_PASSWORD": repeated,
+                "LAB_NITHIN_PASSWORD": secrets.token_urlsafe(20),
+                "LAB_ADMIN_PASSWORD": secrets.token_urlsafe(20),
+            })
+
+            duplicate = subprocess.run(
+                [sys.executable, "scripts/reset_database.py"], cwd=ROOT, env=env,
+                input="RESET\n", capture_output=True, text=True, timeout=30,
+            )
+            self.assertEqual(duplicate.returncode, 2, msg=duplicate.stdout + duplicate.stderr)
+            self.assertEqual(db_path.read_bytes(), original)
+
+            passwords = {
+                "LAB_JOSHUA_PASSWORD": secrets.token_urlsafe(20),
+                "LAB_SABARI_PASSWORD": secrets.token_urlsafe(20),
+                "LAB_NITHIN_PASSWORD": secrets.token_urlsafe(20),
+                "LAB_ADMIN_PASSWORD": secrets.token_urlsafe(20),
+            }
+            env.update(passwords)
+            cancelled = subprocess.run(
+                [sys.executable, "scripts/reset_database.py"], cwd=ROOT, env=env,
+                input="NO\n", capture_output=True, text=True, timeout=30,
+            )
+            self.assertEqual(cancelled.returncode, 1, msg=cancelled.stdout + cancelled.stderr)
+            self.assertEqual(db_path.read_bytes(), original)
+
+            reset = subprocess.run(
+                [sys.executable, "scripts/reset_database.py"], cwd=ROOT, env=env,
+                input="RESET\n", capture_output=True, text=True, timeout=30,
+            )
+            self.assertEqual(reset.returncode, 0, msg=reset.stdout + reset.stderr)
+            backups = list(Path(tmp).glob("eduserve.backup-*.sqlite3"))
+            self.assertEqual(len(backups), 1)
+            self.assertEqual(backups[0].read_bytes(), original)
+            with sqlite3.connect(db_path) as db:
+                self.assertEqual(db.execute("SELECT COUNT(*) FROM users").fetchone()[0], 4)
+
     def test_database_initializer_rejects_duplicate_passwords_before_creating_database(self):
         with tempfile.TemporaryDirectory(prefix="eduserve-duplicate-password-test-") as tmp:
             db_path = str(Path(tmp) / "must-not-exist.sqlite3")
