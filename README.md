@@ -1,12 +1,31 @@
-# Eduserve — Student Portal & Cybersecurity Lab
+# Eduserve — Functional Student Portal & Cybersecurity Assessment Lab
 
-Independent locally hosted cybersecurity training project with fictional academic records. This is not the official Karunya Eduserve system.
+A standalone Flask + SQLite student portal and authorized local web-security training lab. It uses fictional academic records and is **not** the official Karunya Eduserve system. Source files are stored as normal editable project files in this repository.
 
-## Start locally
+## Run on Linux
 
-1. Create a Python virtual environment and install `requirements.txt`.
-2. Copy `.env.example` to `.env`; set unique private passwords for all four accounts and a random `FLASK_SECRET_KEY`.
-3. Run `python -m database.init_db`, then `python app.py`.
-4. Open http://127.0.0.1:5000. Stop with Ctrl+C.
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env
+```
 
-Read `ASSESSMENT_README.md` for the student brief and investigation clues. Read `REMEDIATION.md` for remediation mode. The instructor reference is separate. Vulnerable mode is localhost-only; do not use real credentials/data or expose the app to a network.
+Edit `.env` and replace all four example passwords with unique private passwords of at least 12 characters. Set `FLASK_SECRET_KEY` to a random string of at least 32 characters. Then run:
+
+```bash
+python -m database.init_db
+python app.py
+```
+
+Open http://127.0.0.1:5000 and stop with `Ctrl+C`. The server is configured for localhost only. Do not use real university credentials or records and do not expose vulnerable mode to a network.
+
+## Documentation
+
+- `ASSESSMENT_README.md` — student brief, setup, testing scope, clues, evidence template, and troubleshooting.
+- `REMEDIATION.md` — controls and retest expectations for patched mode.
+- `INSTRUCTOR_NOTES.md` — owner reference to the intended findings and their reproduction.
+
+## Important repository visibility note
+
+This GitHub repository is currently **public**, so `INSTRUCTOR_NOTES.md` is publicly readable. For a real class assessment, change the repository to **Private** in GitHub Settings before sharing it with students, or move the instructor reference to a separate private repository. No lab passwords are committed; configure them locally in `.env`.
