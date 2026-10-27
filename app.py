@@ -49,10 +49,6 @@ def admin_required(fn):
         return fn(*args, **kwargs)
     return wrapped
 
-def get_student_profiles():
-    return get_db().execute('''SELECT u.id,u.display_name,u.email,p.registration_no,p.programme,p.department,p.year_of_study
-      FROM users u JOIN student_profiles p ON p.user_id=u.id ORDER BY u.display_name''').fetchall()
-
 def attendance_summary(records):
     totals = {'present': 0, 'absent': 0, 'unmarked': 0, 'medical': 0, 'total': 0}
     for rec in records:
