@@ -1,0 +1,8 @@
+{% extends 'base.html' %}
+{% block heading %}Personal Information{% endblock %}
+{% block content %}
+<div class="page-intro"><p>Review the personal and academic details associated with this account.</p></div>
+<section class="panel"><div class="panel-head"><div class="profile-main"><div class="profile-avatar small">{{ profile.display_name.split(' ')[0][0] }}{{ profile.display_name.split(' ')[-1][0] }}</div><div><h2>{{ profile.display_name }}</h2><p class="muted">{{ profile.registration_no }}</p></div></div><span class="tag success">Active student</span></div>
+<div class="detail-grid">{% for label,value in [('Email address',profile.email),('Registration number',profile.registration_no),('Programme',profile.programme),('Department',profile.department),('Year of study',profile.year_of_study),('Phone',profile.phone),('Address',profile.address),('Date of birth',profile.date_of_birth)] %}<div class="detail-item"><span>{{ label }}</span><strong>{{ value }}</strong></div>{% endfor %}</div>
+</section>
+{% endblock %}
