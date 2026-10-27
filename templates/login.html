@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Sign in{% endblock %}
+{% block auth_content %}
+<div class="login-layout">
+  <section class="login-visual">
+    <div class="brand login-brand"><span class="brand-mark">E</span><span><strong>eduserve</strong><small>STUDENT PORTAL</small></span></div>
+    <div class="visual-copy">
+      <div class="pill"><span class="status-dot"></span> YOUR ACADEMIC SPACE</div>
+      <h1>Learning today.<br><em>Leading tomorrow.</em></h1>
+      <p>A single space for your academic journey — from attendance and assessments to the next step in your learning.</p>
+      <div class="visual-art"><div class="art-circle circle-one"></div><div class="art-circle circle-two"></div><div class="art-card"><span class="art-icon">✦</span><div><strong>Your progress, in focus</strong><small>Stay connected to your semester</small></div><span class="art-check">✓</span></div></div>
+    </div>
+    <div class="visual-foot">KARUNYA · ACADEMIC SERVICES</div>
+  </section>
+  <section class="login-side"><div class="login-card">
+    <div class="login-symbol">↗</div><div class="eyebrow">WELCOME BACK</div><h2>Sign In to Student Portal</h2>
+    <p class="muted">Enter your lab account details to continue.</p>
+    <form method="post" class="login-form">
+      <label for="email">Email address</label><input id="email" name="email" type="email" autocomplete="username" placeholder="you@example.edu" required autofocus>
+      <label for="password">Password</label><div class="password-wrap"><input id="password" name="password" type="password" autocomplete="current-password" placeholder="Enter your password" required><button type="button" class="password-toggle" data-toggle-password="password" aria-label="Show password">Show</button></div>
+      <button class="button primary full" type="submit">Sign in <span>→</span></button>
+    </form>
+    <div class="login-note"><span>ⓘ</span><p>This is an independent, locally hosted cybersecurity assessment environment. Use only the lab accounts configured for this project.</p></div>
+  </div><div class="login-footer">© 2026 Eduserve Lab <span>·</span> Independent training application</div></section>
+</div>
+{% endblock %}
