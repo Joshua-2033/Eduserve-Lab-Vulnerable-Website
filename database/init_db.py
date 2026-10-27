@@ -15,6 +15,8 @@ PASSWORDS={
 missing=[email for email,pw in PASSWORDS.items() if len(pw)<12 or pw.startswith('change-this-')]
 if missing:
  print('Set unique passwords of at least 12 characters in .env before initialization. Missing/placeholder values for: '+', '.join(missing),file=sys.stderr); sys.exit(2)
+if len(set(PASSWORDS.values())) != len(PASSWORDS):
+ print('Each LAB_*_PASSWORD must be unique; configure a different password for every account.',file=sys.stderr); sys.exit(2)
 secret=os.getenv('FLASK_SECRET_KEY','')
 if len(secret) < 32 or secret.startswith('replace-with-'):
  print('Set FLASK_SECRET_KEY to a random value of at least 32 characters in .env before initialization.',file=sys.stderr); sys.exit(2)
