@@ -1,0 +1,7 @@
+{% extends 'base.html' %}
+{% block title %}Course-wise Attendance{% endblock %}
+{% block heading %}Course-wise Attendance{% endblock %}
+{% block content %}
+<div class="page-intro split-intro"><p>Compare attendance across courses in the selected academic term.</p><form method="get" class="filter-form"><label for="term">Academic term</label><select id="term" name="term" onchange="this.form.submit()">{% for term in terms %}<option value="{{ term.id }}" {{ 'selected' if term.id==selected_term else '' }}>{{ term.name }}</option>{% endfor %}</select></form></div>
+<section class="panel table-panel"><div class="panel-head"><div><h2>Course attendance summary</h2><p class="muted">Medical and unmarked periods are excluded from the percentage denominator.</p></div><span class="tag">{{ rows|length }} courses</span></div><div class="table-wrap"><table><thead><tr><th>Course</th><th>Recorded hours</th><th>Present</th><th>Absent</th><th>Unmarked</th><th>Medical</th><th>Attendance</th></tr></thead><tbody>{% for r in rows %}<tr><td><strong>{{ r.code }}</strong><small class="cell-sub">{{ r.name }}</small></td><td>{{ r.recorded }}</td><td>{{ r.present }}</td><td>{{ r.absent }}</td><td>{{ r.unmarked }}</td><td>{{ r.medical }}</td><td><strong>{{ r.percentage }}%</strong><div class="progress"><span style="width:{{ [r.percentage,100]|min }}%"></span></div></td></tr>{% else %}<tr><td colspan="7" class="empty-state">No course attendance records for this term.</td></tr>{% endfor %}</tbody></table></div></section>
+{% endblock %}
