@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% block heading %}Good to see you, {{ user.display_name.split(' ')[0] }}{% endblock %}
 {% block content %}
-<div class="welcome-row"><div><p class="muted">Here’s what’s happening with your academics today.</p></div><span class="date-chip">◷ &nbsp; Semester 1 · 2026–27</span></div>
+<div class="welcome-row"><div><p class="muted">Here’s what’s happening with your academics today.</p></div><span class="date-chip">◷ &nbsp; {{ term.name if term else 'No active term' }}</span></div>
 {% if user.role=='student' %}
 <section class="profile-hero"><div class="profile-main"><div class="profile-avatar">{{ user.display_name.split(' ')[0][0] }}{{ user.display_name.split(' ')[-1][0] }}</div><div><span class="overline">STUDENT PROFILE</span><h2>{{ user.display_name }}</h2><p>{{ profile.programme }} · {{ profile.department }}</p><div class="profile-meta"><span>▣ {{ profile.registration_no }}</span><span>✉ {{ user.email }}</span></div></div></div><a class="button light" href="{{ url_for('profile') }}">View Profile <span>↗</span></a><div class="hero-decoration"></div></section>
 <div class="stats-grid">
