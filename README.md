@@ -61,7 +61,7 @@ If a database already exists, the initializer will refuse to overwrite it. To de
 python scripts/reset_database.py
 ```
 
-The reset script validates the local configuration first, keeps a timestamped backup of an existing database in `instance/`, then creates a fresh database. Review the backup policy before deleting any backup files. To remove the environment afterward: `deactivate`, then `rm -rf .venv instance/eduserve.sqlite3` (keep `.env` only if you want to retain your local secret configuration).
+The reset script validates the local configuration first, keeps a timestamped backup of an existing database in `instance/`, then creates a fresh database. Review the backup policy before deleting any backup files. To remove the generated local database, backups, and virtual environment afterward: run `deactivate`, then `rm -rf .venv instance`. This leaves your `.env` file in place. To remove the local secrets too, run `rm -f .env` separately after confirming you no longer need them.
 
 ## Database overview
 
