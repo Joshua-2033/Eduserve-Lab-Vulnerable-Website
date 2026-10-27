@@ -13,22 +13,13 @@ The default `vulnerable` lab mode intentionally contains selected implementation
 - Security assessment routes for object-level authorization, role enforcement, input/query handling, stored output handling, and business-state validation.
 - `EDUSERVE_LAB_MODE=vulnerable` (default) and `EDUSERVE_LAB_MODE=patched` to compare selected vulnerable behavior with defensive controls.
 
-## First-time setup and start (Linux)
+## Setup and operation (Linux)
 
-Follow these steps **in order** from the project directory. The most important point is that the password values must be saved in the project's local `.env` file **before** the database is initialized.
+Use the first-time procedure for a new checkout or a database that has not yet been created. For an already configured project, use **Restarting the application**; do not repeat initialization.
 
-### Step 1 — Open the project folder and create the Python environment
+### 1. Create the Python environment and install dependencies
 
-Open a terminal in the folder that contains `app.py`, `requirements.txt`, and `.env.example`. If you downloaded the ZIP, extract it first and open the extracted `Eduserve-Lab-Vulnerable-Website` folder.
-
-Check that you are in the right place:
-
-```bash
-pwd
-ls
-```
-
-Create and activate the virtual environment. Run the creation command only the first time; on later starts, just activate the existing environment.
+From the project root (the directory containing `app.py` and `requirements.txt`):
 
 ```bash
 python3 -m venv .venv
@@ -37,171 +28,138 @@ python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 ```
 
-After activation, the terminal prompt normally begins with `.venv`. If `python3 -m venv .venv` says the environment already exists, that is fine—do not delete it just to continue.
+Run `python3 -m venv .venv` when creating the environment for the first time. On later launches, activate the existing environment with `source .venv/bin/activate`. Re-run the dependency installation if you recreate the environment or change `requirements.txt`.
 
-### Step 2 — Create the local `.env` file once
+### 2. Create `.env` and configure it **before database initialization**
 
-The application reads configuration from `.env` in the project root. Create it only if it does not already exist:
-
-```bash
-if [ ! -f .env ]; then cp .env.example .env; else echo ".env already exists; keeping it unchanged."; fi
-```
-
-**Do not repeatedly copy `.env.example` over an existing `.env`.** Doing so would overwrite the configuration you already entered. The `.env` file is local configuration and must not be committed to GitHub.
-
-### Step 3 — Set the secret key and all four passwords
-
-Generate a secret key:
+Create the local configuration file once. Do not copy the example over an existing `.env`, because that would overwrite your settings.
 
 ```bash
+if [ ! -f .env ]; then cp .env.example .env; else echo ".env already exists; leaving it unchanged."; fi
 python -c "import secrets; print(secrets.token_urlsafe(48))"
-```
-
-This command only **prints** a secret; it does not put it into `.env` automatically. Copy the output, then open the configuration file:
-
-```bash
 nano .env
 ```
 
-Find the five settings below and replace their example values with your own values. Keep the setting names exactly as written on the left of `=`.
+The second command prints a random secret; it does **not** edit the file. Copy its output into `FLASK_SECRET_KEY=` in `.env`, replacing the example value. Then replace all four password values with different passwords of at least 12 characters. Keep the setting names on the left of `=` unchanged.
 
 ```dotenv
-FLASK_SECRET_KEY=paste_the_generated_secret_here
-LAB_JOSHUA_PASSWORD=choose_a_unique_password_at_least_12_chars
-LAB_SABARI_PASSWORD=choose_a_different_unique_password_at_least_12_chars
-LAB_NITHIN_PASSWORD=choose_another_unique_password_at_least_12_chars
-LAB_ADMIN_PASSWORD=choose_a_fourth_unique_password_at_least_12_chars
+FLASK_SECRET_KEY=PASTE_THE_GENERATED_SECRET_HERE
+LAB_JOSHUA_PASSWORD=SET_A_UNIQUE_PASSWORD_AT_LEAST_12_CHARS
+LAB_SABARI_PASSWORD=SET_A_DIFFERENT_PASSWORD_AT_LEAST_12_CHARS
+LAB_NITHIN_PASSWORD=SET_ANOTHER_PASSWORD_AT_LEAST_12_CHARS
+LAB_ADMIN_PASSWORD=SET_A_FOURTH_PASSWORD_AT_LEAST_12_CHARS
 EDUSERVE_LAB_MODE=vulnerable
 ```
 
-These are examples of the **format**, not passwords to use literally. Replace each example value. All four passwords must be at least 12 characters, must be different from one another, and must not begin with the example prefix `change-this-`. Set `FLASK_SECRET_KEY` to the generated output (at least 32 characters), not the example placeholder.
+The values above are placeholders, not values to use literally. The four passwords must be unique and must not start with `change-this-`; the secret must be at least 32 characters and must not start with `replace-with-`. Save the file in Nano with `Ctrl+O`, `Enter`, then `Ctrl+X`.
 
-Do not put the account email addresses in place of the setting names. The emails are the login identifiers used **inside the website**; they are not the environment-variable names or the passwords.
+**Important:** edit `.env` in the same project root as `app.py`. The website login uses email addresses as usernames, but those email addresses are not the password-setting names. The mapping is listed below.
 
-Save and close Nano with `Ctrl+O`, press `Enter`, then `Ctrl+X`.
+### 3. Validate the configuration before creating the database
 
-### Step 4 — Check the configuration before initializing the database
-
-Run this check from the project directory, with the virtual environment active. It reports whether a setting needs attention without printing any password or the secret key:
+Run this from the project root with `.venv` active. It checks the effective configuration without printing the secret or any password.
 
 ```bash
 python - <<'PY'
 import os
 from dotenv import load_dotenv
 
-# Match how the application loads configuration: existing shell variables take precedence.
 load_dotenv(".env")
-password_keys = [
-    "LAB_JOSHUA_PASSWORD",
-    "LAB_SABARI_PASSWORD",
-    "LAB_NITHIN_PASSWORD",
-    "LAB_ADMIN_PASSWORD",
+keys = [
+    "LAB_JOSHUA_PASSWORD", "LAB_SABARI_PASSWORD",
+    "LAB_NITHIN_PASSWORD", "LAB_ADMIN_PASSWORD",
 ]
-passwords = [os.getenv(key, "") for key in password_keys]
-secret = os.getenv("FLASK_SECRET_KEY", "")
-
-problems = []
-for key, value in zip(password_keys, passwords):
-    if len(value) < 12 or value.startswith("change-this-"):
-        problems.append(f"{key}: missing, placeholder, or shorter than 12 characters")
-
+passwords = [os.getenv(k, "") for k in keys]
+problems = [k for k, p in zip(keys, passwords)
+            if len(p) < 12 or p.startswith("change-this-")]
 if len(set(passwords)) != len(passwords):
-    problems.append("The four passwords must all be different")
-
+    problems.append("Passwords must all be different")
+secret = os.getenv("FLASK_SECRET_KEY", "")
 if len(secret) < 32 or secret.startswith("replace-with-"):
-    problems.append("FLASK_SECRET_KEY: missing, placeholder, or shorter than 32 characters")
-
+    problems.append("FLASK_SECRET_KEY is missing or still a placeholder")
 if problems:
-    print("Configuration needs attention:")
-    for problem in problems:
-        print(" - " + problem)
+    print("Fix these .env settings before continuing:")
+    print("\n".join(f" - {p}" for p in problems))
     raise SystemExit(1)
-
-print("Configuration check passed. No secrets were displayed.")
+print("Configuration check passed.")
 PY
 ```
 
-Do not continue until the check says `Configuration check passed`. If it reports an issue, reopen `.env` and correct the named setting.
+Do not continue until it prints `Configuration check passed.`. If it identifies a password setting, check its value in `.env`, save the file, and rerun this check.
 
-### Step 5 — Initialize the database for the first time only
+### 4. Initialize the database **once for a new database**
 
-Only after Step 4 passes, run:
+Only after the configuration check passes:
 
 ```bash
 python -m database.init_db
 ```
 
-This creates the local SQLite database, seeds three fictional student accounts and one administrator, and stores password hashes. **You normally run this command once per fresh database—not every time you start the website.**
+This creates `instance/eduserve.sqlite3`, seeds three fictional student accounts and one administrator, and stores password hashes. Do not run this command at every launch. If it says the database already exists, leave it in place and follow **Restarting the application** below. To recreate it intentionally, follow **Changing passwords or resetting the database**.
 
-If it reports `Missing/placeholder values for: joshua@karunya.edu.in` (or another account), the initializer has not received a valid value for that account's corresponding setting:
+If the initializer reports missing or placeholder values for account identifiers, it is referring to the corresponding `.env` setting:
 
-- `joshua@karunya.edu.in` → `LAB_JOSHUA_PASSWORD`
-- `sabari@karunya.edu.in` → `LAB_SABARI_PASSWORD`
-- `nithin@karunya.edu.in` → `LAB_NITHIN_PASSWORD`
-- `admin@karunya.edu` → `LAB_ADMIN_PASSWORD`
+| Login identifier | Required setting in `.env` |
+|---|---|
+| `joshua@karunya.edu.in` | `LAB_JOSHUA_PASSWORD` |
+| `sabari@karunya.edu.in` | `LAB_SABARI_PASSWORD` |
+| `nithin@karunya.edu.in` | `LAB_NITHIN_PASSWORD` |
+| `admin@karunya.edu` | `LAB_ADMIN_PASSWORD` |
 
-That message means the setting in `.env` is missing, still an example value, or too short. Check that you edited the `.env` in the same project folder, saved the file, and used the exact setting names shown in Step 3. Run Step 4 again before retrying initialization.
+That error means one or more effective values are missing, shorter than 12 characters, or still use the example prefix. Verify that you edited and saved the correct `.env` file and used the exact setting name. Run Step 3 again before retrying initialization.
 
-If the initializer says the database already exists, do not keep rerunning it. Follow **Restarting the application** below, or use **Changing passwords or resetting the database** if you intentionally need a fresh database.
-
-### Step 6 — Start the website
+### 5. Start the application
 
 ```bash
 python app.py
 ```
 
-Open [http://127.0.0.1:5000](http://127.0.0.1:5000). The health endpoint is [http://127.0.0.1:5000/health](http://127.0.0.1:5000/health). Leave the terminal running while using the site. To stop the server, return to that terminal and press `Ctrl+C`.
+Open [http://127.0.0.1:5000](http://127.0.0.1:5000). The health endpoint is [http://127.0.0.1:5000/health](http://127.0.0.1:5000/health). Keep the terminal running while you use the site; stop the server with `Ctrl+C`. By default it binds to `127.0.0.1`. Do not bind it to `0.0.0.0` or expose vulnerable mode to a network.
 
-The app binds to `127.0.0.1` by default. Do not change it to `0.0.0.0` or expose vulnerable mode to a network.
+### Login identifiers
 
-### Seeded account identifiers
+Use these identifiers on the website's login form. The corresponding passwords are the values you saved in `.env`; they are never printed or committed.
 
-Use these email addresses in the website's login form. The passwords are the four values you configured in `.env`; they are not printed or committed.
-
-| Role | Login identifier | Password setting in `.env` |
+| Role | Login identifier | Password setting |
 |---|---|---|
 | Student | `joshua@karunya.edu.in` | `LAB_JOSHUA_PASSWORD` |
 | Student | `sabari@karunya.edu.in` | `LAB_SABARI_PASSWORD` |
 | Student | `nithin@karunya.edu.in` | `LAB_NITHIN_PASSWORD` |
 | Administrator | `admin@karunya.edu` | `LAB_ADMIN_PASSWORD` |
 
-The administrator display name is **Eduserve Academic Administrator**. The address is also shown under **Contact Administration**. An email address is not a credential and does not grant administrator privileges.
+The administrator display name is **Eduserve Academic Administrator**. Its email address is also visible in Contact Administration; the email itself does not grant administrator privileges.
 
 ## Restarting the application
 
-Use these steps each time you want to run an **already initialized** copy of the project:
-
-1. Open a terminal in the project folder (the folder containing `app.py`).
-2. Activate the existing virtual environment.
-3. Start the application. Do **not** copy `.env.example` again and do **not** run the database initializer again.
+For an already initialized project, open a terminal in the project root and run:
 
 ```bash
 source .venv/bin/activate
 python app.py
 ```
 
-Then open [http://127.0.0.1:5000](http://127.0.0.1:5000). Stop it with `Ctrl+C`. Your database, enrolled courses, attendance, results, and feedback remain stored locally between restarts.
-
-If you open a new terminal, activate `.venv` in that terminal before running the app. If you have not installed the dependencies in that environment yet, run `python -m pip install -r requirements.txt` once.
+Then visit [http://127.0.0.1:5000](http://127.0.0.1:5000). Do **not** run `cp .env.example .env` or `python -m database.init_db` again. Your database and submitted feedback persist between restarts. If this is a new terminal, activate `.venv` there as well.
 
 ## Changing passwords or resetting the database
 
-Changing a password in `.env` **does not change the password hash already stored in an existing database**. The new values are used when the database is freshly initialized.
+Editing a password in `.env` does **not** update its existing SQLite password hash. The configured passwords are applied when a database is initialized.
 
-If you want the new configured passwords to become the login passwords, or you deliberately want to restore a clean lab:
+To apply new passwords or deliberately restore a clean lab:
 
-1. Stop the running application with `Ctrl+C`.
-2. Edit and save `.env` as in Step 3. Keep all four passwords unique and at least 12 characters.
-3. Run the configuration check in Step 4.
-4. Run the reset script:
+1. Stop the server with `Ctrl+C`.
+2. Edit and save `.env` as in Step 2; all four passwords must be different and at least 12 characters.
+3. Run the configuration check in Step 3 and ensure it passes.
+4. Run:
 
-```bash
-python scripts/reset_database.py
-```
+   ```bash
+   python scripts/reset_database.py
+   ```
 
-5. Read the confirmation prompt. Type `RESET` only if you intend to replace the current synthetic database. The script makes a timestamped backup before recreating the database. If you do not want to reset, type anything else to cancel.
+5. Review the prompt. Type `RESET` only if you intend to replace the active database. The script creates a timestamped backup before recreating the database. Any other response cancels the reset.
 
-Resetting removes the existing local lab data from the active database and seeds a fresh set of records using the currently configured passwords. Review and manage the backup files in `instance/` yourself. **Do not run the reset script casually**; it is destructive to the active database.
+The reset replaces active synthetic records and seeds new account password hashes from the current configuration. Review/manage the backup files in `instance/`. Do not run this script casually; it changes the active lab database.
+
+To remove the local environment after use, stop the server, run `deactivate`, then `rm -rf .venv instance`. This leaves `.env` in place. To remove local secrets as well, separately run `rm -f .env` after confirming you no longer need them.
 
 ## Database overview
 
