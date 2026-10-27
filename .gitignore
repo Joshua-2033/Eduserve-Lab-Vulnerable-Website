@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+*.py[cod]
+.env
+instance/*.sqlite*
+instance/*.db
+.pytest_cache/
+
+# Local security assessment evidence
+evidence/
+*.burp
+*.har
